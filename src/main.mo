@@ -159,39 +159,12 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
     let CAP = Cap.Cap(?actorCapRouter, capRootBucket);
     let CAPRouter : CapRouter.Self = actor(actorCapRouter);
 
-    public shared func installCap () : async Principal {
+    public shared func installCap () : async () {
 
-        func queryRootBucket () : async ?Principal {
-            let { canister; } = await CAPRouter.get_token_contract_root_bucket({
-                canister = Principal.fromText(actorSelf);
-                witness = false;
-            });
-            canister;
-        };
-
-        switch (await queryRootBucket()) {
-            case (?c) {
-                capRootBucket := ?Principal.toText(c);
-                return c;
-            };
-            case _ ();
-        };
-
-        let handshake = await CAP.handshake(
-            actorCapRouter,
+        await CAP.handshake(
+            actorSelf,
             1_000_000_000_000,
         );
-
-        switch (await queryRootBucket()) {
-            case (?c) {
-                capRootBucket := ?Principal.toText(c);
-                return c;
-            };
-            case _ {
-                Debug.print("Should not be possible to not have a root bucket.");
-                Prelude.unreachable();
-            };
-        };
 
     };
 
