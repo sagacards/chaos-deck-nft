@@ -311,7 +311,7 @@ module TokensFactory {
                     operation = "mint";
                     details = [
                         ("token", #Text(tokenId(state.canister, index))),
-                        ("to", #Text(Ext.User.toAccountIdentifier(to))),  // This part maybe sucks. Could use Principal here.
+                        ("to", #Text(Ext.User.toAccountIdentifier(to))),
                     ];
                     caller;
                 })
@@ -384,8 +384,8 @@ module TokensFactory {
                     operation = "transfer";
                     details = [
                         ("token", #Text(tokenId(state.canister, index))),
-                        ("to", #Text(to)),  // This part maybe sucks. Could use Principal here.
-                        ("from", #Text(from)),  // This part maybe sucks. Could use Principal here.
+                        ("to", #Text(to)),
+                        ("from", #Text(from)),
                         ("memo", #Slice(Blob.toArray(request.memo))),
                         ("balance", #U64(1)),
                     ];
