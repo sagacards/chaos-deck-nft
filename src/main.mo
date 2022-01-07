@@ -156,7 +156,7 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
     // Under the hood, a central hub canister will spawn a companion canister dedicated
     // to this token canister's transaction history. We simply use `cap.insert` to log all
     // transactions.
-    let CAP = Cap.Cap(?actorCapRouter, capRootBucket);
+    let CAP = Cap.Cap(?actorCapRouter);
     let CAPRouter : CapRouter.Self = actor(actorCapRouter);
 
     public shared func installCap () : async () {
