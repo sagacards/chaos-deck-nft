@@ -17,6 +17,7 @@ import Text "mo:base/Text";
 // Project Imports
 
 import AssetTypes "../Assets/types";
+import TarotData "../Tarot/data";
 
 // Module Imports
 
@@ -72,6 +73,7 @@ module {
                 headers = [
                     ("Content-Type", asset.asset.contentType),
                     ("Access-Control-Allow-Origin", "*"),
+                    ("Cache-Control", "max-age=31536000"), // Cache one year
                 ];
                 status_code = 200;
                 streaming_strategy = null;
@@ -112,7 +114,10 @@ module {
                     "<!doctype html>" #
                     "<html>" #
                         app #
-                        "<script>window.legendIndex = " # Nat.toText(index) # "</script>" #
+                        "<script>" #
+                        "const token = window.token = " # Nat.toText(index) # ";" #
+                        "const canister = window.canister = \"6e6eb-piaaa-aaaaj-qal6a-cai\";" #
+                        "</script>" #
                     "</html>"
                 );
                 headers = [
@@ -232,8 +237,8 @@ module {
                 case (?err) return err;
                 case _ ();
             };
-            if (Text.contains(request.url, #text("type=card-art"))) {
-                return renderAssetWithTags(["preview", "flat"]);
+            if (not Text.contains(request.url, #text("type=thumbnail"))) {
+                return renderDeckExplorerApp(Nat32.toNat(index));
             };
             switch (state.Tokens.getToken(index)) {
                 case (?token) {
@@ -248,11 +253,13 @@ module {
         };
 
         // @path: *?tokenindex=<nat>
-        // Displays the side-by-side preview.
         private func httpTokenIndex (request : Types.Request) : Types.Response {
             let index = Iter.toArray(Text.tokens(request.url, #text("tokenindex=")))[1];
             switch (natFromText(index)) {
                 case (?i) {
+                    if (not Text.contains(request.url, #text("type=thumbnail"))) {
+                        return renderDeckExplorerApp(i);
+                    };
                     switch (state.Tokens.getToken(Nat32.fromNat(i))) {
                         case (?token) {
                             let chaos = token.metadata.cards[78].chaos;
@@ -278,31 +285,78 @@ module {
                     // TODO: Render the deck explorer view.
                     switch (state.Tokens.getToken(Nat32.fromNat(index))) {
                         case (?token) {
-                            let chaos = token.metadata.cards[78].chaos;
-                            return renderAssetWithTags([
-                                "chaos-" # Nat8.toText(chaos),
-                                "card-" # Nat8.toText(78),
-                            ]);
+                            if (tokens.size() == 1) {
+                                return renderDeckExplorerApp(index)
+                            } else {
+                                let chaos = token.metadata.cards[78].chaos;
+                                return renderAssetWithTags([
+                                    "chaos-" # Nat8.toText(chaos),
+                                    "card-" # Nat8.toText(78),
+                                ]);
+                            };
                         };
                         case (_) return http404(null);
                     };
-                    // if (tokens.size() == 1) {
-                    //     return renderDeckExplorerApp(index)
-                    // } else if (Text.map(tokens[1], Prim.charToLower) == "webm") {
-                    //     return renderAssetWithTags([
-                    //         "preview", "animated", "back-" # token.back,
-                    //         "border-" # token.border, "ink-" # token.ink
-                    //     ]);
-                    // } else if (Text.map(tokens[1], Prim.charToLower) == "webp") {
-                    //     return renderAssetWithTags([
-                    //         "preview", "side-by-side", "back-" # token.back,
-                    //         "border-" # token.border, "ink-" # token.ink
-                    //     ]);
-                    // }
                 };
                 case _ ();
             };
             http404(null);
+        };
+
+
+        // @path: /manifest/<nat>
+        private func httpDeckInfo (path : ?Text) : Types.Response {
+            let index = switch (path) {
+                case (?p) natFromText(p);
+                case _ null;
+            };
+            switch (index) {
+                case (?i) {
+                    switch (mintedOr404(i)) {
+                        case (?err) return err;
+                        case _ ();
+                    };
+                    switch (state.Tokens.getToken(Nat32.fromNat(i))) {
+                        case (?token) {
+                            var response = "";
+                            var j = 0;
+                            while (j < 79) {
+                                let info = TarotData.Cards[j];
+                                response := response #
+                                        (switch (response == "") {
+                                            case true "";
+                                            case false ",\n"
+                                        })
+                                        # "\t{\n"
+                                        # "\n\t\t\"index\":" # Nat.toText(info.index) # ","
+                                        # "\n\t\t\"number\":" # Nat.toText(info.number) # ","
+                                        # "\n\t\t\"suit\": \"" # (switch (info.suit) {
+                                            case (#wands) "wands";
+                                            case (#trump) "trump";
+                                            case (#swords) "swords";
+                                            case (#cups) "cups";
+                                            case (#pentacles) "pentacles";
+                                        }) # "\","
+                                        # "\n\t\t\"name\": \"" # info.name # "\","
+                                        # "\n\t\t\"image\": \"/assets/" # token.metadata.cards[j].image # "\""
+                                        # "\n\t\n}";
+                                    j += 1;
+                            };
+                            return {
+                                body = Text.encodeUtf8("[\n" # response # "\n]");
+                                headers = [
+                                    ("Content-Type", "application/json"),
+                                    ("Access-Control-Allow-Origin", "*"),
+                                ];
+                                status_code = 200;
+                                streaming_strategy = null;
+                            };
+                        };
+                        case (_) return http404(null);
+                    };
+                };
+                case null http404(?"Invalid index.");
+            }
         };
 
 
@@ -351,6 +405,7 @@ module {
             ("asset", httpAssetFilename),
             ("assets", httpAssetFilename),
             ("asset-manifest", httpAssetManifest),
+            ("manifest", httpDeckInfo),
         ];
 
 

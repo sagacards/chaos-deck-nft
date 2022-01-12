@@ -7,3 +7,5 @@ for file in art/*/webp/*.webp; \
         echo "$file ($chaos) ($card)";
         zsh zsh/upload.zsh $file "chaos-$chaos-card-$card.webp" "Chaos #$chaos Card #$card" "chaos-$chaos card-$card" "Art asset for card #$card with a chaos level of $chaos." "image/webp" $network
     done;
+
+zsh ./zsh/upload.zsh client/index.html deck-explorer.html "Deck Explorer App" "preview-app" "A web app to display all of the cards in a deck" "text/html" $network
