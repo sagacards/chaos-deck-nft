@@ -163,7 +163,7 @@ module TokensFactory {
         public func _getMinted () : [Ext.TokenIndex] {
             let minted = Buffer.Buffer<Ext.TokenIndex>(0);
             var i : Nat32 = 0;
-            while (Nat32.toNat(i) < state.supply) {
+            while (Nat32.toNat(i) < 10_000) {
                 if (not Option.isNull(ledger.get(i))) {
                     minted.add(i);
                 };
@@ -256,7 +256,7 @@ module TokensFactory {
         ) : async () {
             assert state.Admins._isAdmin(caller);
             // We expect there to be a list of 117 ownership principals from the fool.
-            assert whitelist.size() == state.supply;
+            assert whitelist.size() == 117;
             for (address in whitelist.vals()) {
                 await mintRandom(caller, #address(address));
             };

@@ -9,7 +9,6 @@ module {
         Admins      : AdminsFactory.make;
         Assets      : AssetsFactory.make;
         Tokens      : TokensFactory.make;
-        supply      : Nat;
     };
 
     public type HeaderField = (Text, Text);

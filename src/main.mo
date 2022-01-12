@@ -23,14 +23,6 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
 ) = {
 
 
-    /////////////
-    // Config //
-    ///////////
-
-
-    let supply = 117;
-
-
     ///////////////////
     // Stable State //
     /////////////////
@@ -48,10 +40,6 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
     // Tokens
 
     private stable var stableTokens : [(TokensTypes.TokenIndex, TokensTypes.Token)] = [];
-
-    // CAP
-
-    private stable var capRootBucket : ?Text = null;
 
     // Upgrades
 
@@ -180,7 +168,6 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
         canister = Principal.fromText(actorSelf);
         thefool = Principal.fromText(actorTheFool);
         tokens = stableTokens;
-        supply;
     });
 
     public shared ({ caller }) func allowance(
@@ -257,7 +244,6 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
         Assets;
         Admins;
         Tokens;
-        supply;
     });
 
     public query func http_request(request : HttpFactoryTypes.Request) : async HttpFactoryTypes.Response {

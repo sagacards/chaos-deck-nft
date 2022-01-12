@@ -13,7 +13,6 @@ module Tokens {
         canister: Principal;
         thefool : Principal;
         tokens  : [(TokenIndex, Token)];
-        supply  : Nat;
     };
 
     public type TokenIndex = Nat32;

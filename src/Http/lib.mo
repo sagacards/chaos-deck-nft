@@ -39,7 +39,8 @@ module {
             text : Text
         ) : ?Nat {
             var match : ?Nat = null;
-            for (i in Iter.range(0, state.supply - 1)) {
+            let supply = state.Tokens._getMinted().size();
+            for (i in Iter.range(0, supply - 1)) {
                 if (Nat.toText(i) == text) {
                     match := ?i;
                 };
