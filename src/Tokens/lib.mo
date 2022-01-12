@@ -483,7 +483,7 @@ module TokensFactory {
                 >(
                     Iter.toArray(ledger.entries()),
                     func ((i, token)) {
-                        if (token.owner == accountId) {
+                        if (Text.map(token.owner, Prim.charToUpper) == Text.map(accountId, Prim.charToUpper)) {
                             ?(i, null, null);
                         } else {
                             null;
