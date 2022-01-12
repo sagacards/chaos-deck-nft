@@ -477,13 +477,17 @@ module TokensFactory {
             accountId : Ext.AccountIdentifier,
         ) : Result.Result<[Types.TokenExt], Ext.CommonError> {
             #ok(
-                Array.map<
+                Array.mapFilter<
                     (Types.TokenIndex, Types.Token),
                     Types.TokenExt,
                 >(
                     Iter.toArray(ledger.entries()),
                     func ((i, token)) {
-                        (i, null, null)
+                        if (token.owner == accountId) {
+                            ?(i, null, null);
+                        } else {
+                            null;
+                        }
                     },
                 )
             );
