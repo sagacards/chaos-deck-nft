@@ -234,6 +234,14 @@ shared ({ caller = creator }) actor class InternetComputerNFTCanister (
         Tokens.read(null);
     };
 
+    public query func getRegistry () : async [(Ext.TokenIndex, Ext.AccountIdentifier)] {
+        Tokens.getRegistry();
+    };
+
+    public query ({ caller }) func decks () : async [Ext.TokenIndex] {
+        Tokens.decks(caller);
+    };
+
 
     ///////////
     // HTTP //

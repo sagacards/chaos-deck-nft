@@ -1,17 +1,13 @@
-// 3rd Party Imports
-
-import AccountIdentifier "mo:principal/AccountIdentifier";
 import Array "mo:base/Array";
-import Bool "mo:base/Bool";
 import Blob "mo:base/Blob";
+import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
-import Ext "mo:ext/Ext";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
-import Option "mo:base/Option";
 import Nat "mo:base/Nat";
-import Nat8 "mo:base/Nat8";
 import Nat32 "mo:base/Nat32";
+import Nat8 "mo:base/Nat8";
+import Option "mo:base/Option";
 import Prim "mo:prim";
 import Principal "mo:base/Principal";
 import Random "mo:base/Random";
@@ -19,12 +15,13 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 
-// Project Imports
+import AccountIdentifier "mo:principal/AccountIdentifier";
+import Ext "mo:ext/Ext";
 
 import AssetTypes "../Assets/types";
-
-// Module Imports
-
+import Hex "../Util/Hex";
+import SHA224 "../Util/SHA224";
+import CRC32 "../Util/CRC32";
 import Types "types";
 
 
@@ -493,6 +490,16 @@ module TokensFactory {
             );
         };
 
+        public func getRegistry() : [(Ext.TokenIndex, Ext.AccountIdentifier)] {
+            var i : Nat32 = 0;
+            Array.map<(Ext.TokenIndex, Types.Token), (Ext.TokenIndex, Ext.AccountIdentifier)>(
+                Iter.toArray(ledger.entries()),
+                func (a) {
+                    (a.0, a.1.owner)
+                }
+            );
+        };
+
         // Non-standard EXT
 
         public func tokenId(
@@ -513,6 +520,54 @@ module TokensFactory {
                     func ((_, token)) { ?token },
                 )
             };
+        };
+
+        public func decks (p : Principal) : [Types.TokenIndex] {
+            Array.mapFilter<
+                    (Types.TokenIndex, Types.Token),
+                    Types.TokenIndex,
+                >(
+                    Iter.toArray(ledger.entries()),
+                    func ((i, token)) {
+                        if (Text.map(token.owner, Prim.charToUpper) == defaultAccount(p)) {
+                            ?i;
+                        } else {
+                            null;
+                        }
+                    },
+                )
+        };
+
+        public func defaultSubaccount() : Subaccount {
+            Blob.fromArrayMut(Array.init(32, 0 : Nat8))
+        };
+
+        public func defaultAccount(
+            principal : Principal
+        ) : Text {
+            Text.map(Hex.encode(Blob.toArray(accountIdentifier(principal, defaultSubaccount()))), Prim.charToUpper);
+        };
+
+        type Subaccount = Blob;
+
+        // Until Quint's account identifier method is fixed:
+        func beBytes(n: Nat32) : [Nat8] {
+            func byte(n: Nat32) : Nat8 {
+                Nat8.fromNat(Nat32.toNat(n & 0xff))
+            };
+            [byte(n >> 24), byte(n >> 16), byte(n >> 8), byte(n)]
+        };
+        public type AccountIdentifier = Blob;
+
+        public func accountIdentifier(principal: Principal, subaccount: Subaccount) : AccountIdentifier {
+            let hash = SHA224.Digest();
+            hash.write([0x0A]);
+            hash.write(Blob.toArray(Text.encodeUtf8("account-id")));
+            hash.write(Blob.toArray(Principal.toBlob(principal)));
+            hash.write(Blob.toArray(subaccount));
+            let hashSum = hash.sum();
+            let crc32Bytes = beBytes(CRC32.ofArray(hashSum));
+            Blob.fromArray(Array.append(crc32Bytes, hashSum))
         };
 
     };
